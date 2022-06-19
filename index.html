@@ -13,7 +13,11 @@
   <script>
     var socket = io("ws://localhost:3000", {
       // 默认使用websocket协议
-      transports: ["websocket"]
+      transports: ["websocket"],
+      // 自定义socket.id,不设置将从服务端获取
+      auth: {
+        token: `web${new Date().toLocaleTimeString()}`
+      }
     });
     console.log(socket)
 
