@@ -11,6 +11,7 @@ const io = new Server(httpServer, {
 io.use((socket, next) => {
   // 当传输token时，使用token作为id
   if (socket.handshake.auth.token) {
+    // @ts-ignore
     socket.id = socket.handshake.auth.token;
   }
   next();
