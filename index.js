@@ -37,6 +37,10 @@ io.on("connection", (socket) => {
       callback("ok");
     }
   });
+
+  socket.on("disconnect", (reason) => {
+    console.log(`user disconnect: ${socket.id}, reason: ${reason}`);
+  });
 });
 
 httpServer.listen(3000);
