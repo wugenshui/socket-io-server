@@ -25,15 +25,15 @@
     socket.on("connect", () => {
       console.log("connect server", socket.id);
       // 加入一个房间
-      socket.emit("join-room", "my-room")
+      socket.emit("join-room", "my-room", (response) => {
+        console.log("join-room callback:", response)
+      })
       // 发送消息至房间
       socket.emit("send", {
-        "room": "my-room", data: {
+        "room": "my-room", msg: {
           type: 1,
-          date: new Date().toLocaleString()
+          time: new Date().toLocaleTimeString()
         }
-      }, (response) => {
-        console.log("send msg response:", response)
       })
     });
 
