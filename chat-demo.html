@@ -64,11 +64,25 @@
   <form id="form" action="">
     <input id="input" autocomplete="off" /><button>Send</button>
   </form>
-  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
   <script>
-    var socket = io({
+    var socket = io("ws://localhost:3000", {
       // 默认使用websocket协议
-      transports: ["websocket"]
+      transports: ["websocket"],
+      // 自定义socket.id,不设置将由服务端自动生成
+      auth: {
+        token: `web-user-${new Date().toLocaleTimeString().replaceAll(":", "")}`
+      }
+    });
+
+    // 连接上服务器处理
+    socket.on("connect", () => {
+      console.log(`${socket.id} 已成功连接服务器`);
+
+      // 加入一个房间，按业务需要进行添加，这里固定是：my-room
+      socket.emit("join-room", "my-room", (response) => {
+        console.log("加入房间回调:", response)
+      })
     });
 
 
@@ -79,14 +93,23 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (input.value) {
-        socket.emit('chat message', input.value);
+        socket.emit('send', {
+          room: "my-room",
+          msg: {
+            type: 1,
+            time: new Date().toLocaleTimeString(),
+            content: input.value
+          }
+        });
         input.value = '';
       }
     });
 
-    socket.on('chat message', function (msg) {
+    // 接收消息处理
+    socket.on('send', (msg) => {
+      console.log('send rec', msg);
       var item = document.createElement('li');
-      item.textContent = msg;
+      item.textContent = `${msg.from}：${msg.content}`;
       messages.appendChild(item);
       window.scrollTo(0, document.body.scrollHeight);
     });

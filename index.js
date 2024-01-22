@@ -19,36 +19,35 @@ io.use((socket, next) => {
 
 // 监听新连接
 io.on("connection", (socket) => {
-  console.log(
-    `connection: ${socket.id}, user count: ${io.engine.clientsCount}`
-  );
+  console.log(`用户连接: ${socket.id}, \t当前用户数: ${io.engine.clientsCount}`);
 
   // 监听加入房间事件
   socket.on("join-room", (roomName, callback) => {
     socket.join(roomName);
     // 广播消息回调，用于确认服务端是否收到消息
     if (typeof callback === "function") {
-      callback({ state: true, room: [...socket.rooms] });
+      // socket.rooms 为用户加入的房间，用户连接默认会加入自己id相同的房间
+      callback({ state: true, joinRooms: [...socket.rooms] });
     }
   });
 
-  // 监听消息广播事件
+  // 监听消息广播事件 { room: 'roomName', msg: { from: 'server', type: '1', time: '2024-01-22 00:00:00', content: 'msg' } }
   socket.on("send", (data) => {
     // 添加消息传输人信息
     if (data && data.msg) {
       data.msg.from = socket.id;
     }
     // 分发消息
-    socket.to(data.room).emit(data.msg);
+    socket.in(data.room).emit("send", data.msg);
   });
 
   // 监听掉线事件
   socket.on("disconnect", (reason) => {
     console.log(
-      `disconnect: ${socket.id}, reason: ${reason}, user count: ${io.engine.clientsCount}`
+      `用户掉线: ${socket.id}, \t原因: ${reason}, \t当前用户数: ${io.engine.clientsCount}`
     );
   });
 });
 
 httpServer.listen(3000);
-console.log('server is lintening on port 3000')
+console.log('服务启动成功，监听端口：3000');
