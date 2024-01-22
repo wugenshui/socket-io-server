@@ -1,45 +1,117 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Socket.IO</title>
+  <title>chat-demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding-bottom: 3rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    #form {
+      background: rgba(0, 0, 0, 0.15);
+      padding: 0.25rem;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      height: 3rem;
+      box-sizing: border-box;
+      backdrop-filter: blur(10px);
+    }
+
+    #input {
+      border: none;
+      padding: 0 1rem;
+      flex-grow: 1;
+      border-radius: 2rem;
+      margin: 0.25rem;
+    }
+
+    #input:focus {
+      outline: none;
+    }
+
+    #form>button {
+      background: #333;
+      border: none;
+      padding: 0 1rem;
+      margin: 0.25rem;
+      border-radius: 3px;
+      outline: none;
+      color: #fff;
+    }
+
+    #messages {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    #messages>li {
+      padding: 0.5rem 1rem;
+    }
+
+    #messages>li:nth-child(odd) {
+      background: #efefef;
+    }
+  </style>
 </head>
 <body>
-  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"
-    integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k"
-    crossorigin="anonymous"></script>
+  <ul id="messages"></ul>
+  <form id="form" action="">
+    <input id="input" autocomplete="off" /><button>Send</button>
+  </form>
+  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
   <script>
     var socket = io("ws://localhost:3000", {
       // 默认使用websocket协议
       transports: ["websocket"],
-      // 自定义socket.id,不设置将从服务端获取
+      // 自定义socket.id,不设置将由服务端自动生成
       auth: {
-        token: `web${new Date().toLocaleTimeString()}`
+        token: `web-user-${new Date().toLocaleTimeString().replaceAll(":", "")}`
       }
     });
-    console.log(socket)
 
     // 连接上服务器处理
     socket.on("connect", () => {
-      console.log("connect server", socket.id);
-      // 加入一个房间
+      console.log(`${socket.id} 已成功连接服务器`);
+
+      // 加入一个房间，按业务需要进行添加，这里固定是：my-room
       socket.emit("join-room", "my-room", (response) => {
-        console.log("join-room callback:", response)
-      })
-      // 发送消息至房间
-      socket.emit("send", {
-        "room": "my-room", msg: {
-          type: 1,
-          time: new Date().toLocaleTimeString()
-        }
+        console.log("加入房间回调:", response)
       })
     });
 
-    // 与服务器断开处理
-    socket.on("disconnect", () => {
-      console.log("disconnect server"); // undefined
+
+    var messages = document.getElementById('messages');
+    var form = document.getElementById('form');
+    var input = document.getElementById('input');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('send', {
+          room: "my-room",
+          msg: {
+            type: 1,
+            time: new Date().toLocaleTimeString(),
+            content: input.value
+          }
+        });
+        input.value = '';
+      }
+    });
+
+    // 接收消息处理
+    socket.on('send', (msg) => {
+      console.log('send rec', msg);
+      var item = document.createElement('li');
+      item.textContent = `${msg.from}：${msg.content}`;
+      messages.appendChild(item);
+      window.scrollTo(0, document.body.scrollHeight);
     });
   </script>
 </body>
