@@ -51,3 +51,4 @@ io.on("connection", (socket) => {
 });
 
 httpServer.listen(3000);
+console.log('server is lintening on port 3000')
